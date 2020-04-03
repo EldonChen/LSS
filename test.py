@@ -10,14 +10,11 @@ def kmeans(img,K=6,mask=None):
     cv2.imwrite('img/~test.png',mask*img)
     Z = img.reshape((-1,1))
     Z = np.float32(Z)
-
+    #尝试使用opencv和sklearn的kmeans，感觉opencv更快一点
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret,_label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
     # label = KMeans(n_clusters=K, random_state=0).fit(Z).labels_
     _label = np.uint8(_label)
-    np.savetxt("_label.txt",_label) 
-    print(_label)
-    print('>>>')
     count = np.bincount(_label.flatten())
     a = np.sort(count)[-2]
     max_label = list(count).index(a)
@@ -91,13 +88,8 @@ from matplotlib import pyplot as plt
 # plt.hist(hist,1,[0,256])
 plt.subplot(221),plt.imshow(img,'gray')
 plt.subplot(222),plt.imshow(label,'gray')
-# plt.subplot(223),plt.imshow(ret,'gray')
-lahist = cv2.calcHist([label],[0],None,[K],[0,K])
-plt.subplot(223),plt.plot(lahist,'c')
+plt.subplot(223),plt.imshow(ret,'gray')
+# lahist = cv2.calcHist([label],[0],None,[K],[0,K])
+# plt.subplot(223),plt.plot(lahist,'c')
 plt.subplot(224),plt.plot(hist,'c'),plt.plot(range(IBin),y,'r')
 plt.show()
-# res = kmeans(img)
-# cv2.imshow('img',img)
-# cv2.waitKey(0)
-# cv2.imshow('res3',res*255)
-# cv2.waitKey(0)
