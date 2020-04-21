@@ -16,6 +16,7 @@ def kmeans(img,K=6,mask=None):
     # label = KMeans(n_clusters=K, random_state=0).fit(Z).labels_
     _label = np.uint8(_label)
     count = np.bincount(_label.flatten())
+    #目前实现思路是选第二大的分类label（第一大的是背景）
     a = np.sort(count)[-2]
     max_label = list(count).index(a)
     label = np.where(_label == max_label, 1, 0)
@@ -25,7 +26,22 @@ def kmeans(img,K=6,mask=None):
     kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(30, 30))
     res2 = cv2.morphologyEx(res1, cv2.MORPH_OPEN, kernel)
     res3 = cv2.morphologyEx(res2, cv2.MORPH_CLOSE, kernel2)
-    return res3,_label.reshape(img.shape)
+    return res3 , _label.reshape(img.shape)
+
+def _open(img,r=5,shape=cv2.MORPH_ELLIPSE):
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
+    return cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+
+def _close(img,r=30,shape=cv2.MORPH_ELLIPSE):
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
+    return cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+
+def remove_fine_obj(img,area=30):
+    _, contours, hierarchy	= cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    print(hierarchy)
+    for i in range(hierarchy.shape[0]):
+        if cv2.contourArea(contours[i]) <= area:
+            contours.delete()
 
 def func(x, a,u, sig):
     return  a*(np.exp(-(x - u) ** 2 /(2* sig **2))/(math.sqrt(2*math.pi)*sig))
@@ -40,31 +56,31 @@ img = cv2.imread(path,-1)
 # img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
 rmask = np.zeros(img.shape[:2], np.uint8)
 rmask[120:350, 70:350] = 255
-K = 12
+K = 6
 mask,label = kmeans(img,K=K,mask = rmask)
 
-# print(mask)
+remove_fine_obj(mask)
 ret = cv2.bitwise_and(img, img, mask=mask)
-# cv2.imshow('img',img)
-# cv2.waitKey(0)
-# cv2.imwrite('img/test.png',mask*img)
+
 Imax = int(img.max())
 Imin = int(img.min())
 IBin = int(Imax - Imin +1)
 Ibox = [Imin,Imax]
-
 
 hist = cv2.calcHist([img],[0],mask,[IBin],Ibox)
 hist = hist/np.sum(hist)
 x = range(IBin)
 x = np.array(x).reshape(-1, 1)
 y_ = hist.flatten().reshape(-1, 1)
+
+# 尝试用最小二乘拟合获得强度直方图（可惜失败了）
 # pars = np.random.rand(3)
 # r = leastsq(residuals, pars, args=(x, y_))
 # popt = r[0]
 # print(r)
 # y = [func(i, popt[0],popt[1],popt[2]) for i in range(256)]
 
+#另一种尝试拟合（效果很一言难尽）
 dataset = np.column_stack((x,y_))
 
 clf = mixture.GaussianMixture(1)
