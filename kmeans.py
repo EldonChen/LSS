@@ -1,7 +1,9 @@
 import cv2
+import numpy as np
+import tool
 def kmeans(img,K=6,mask=None):
     img = cv2.bitwise_and(img, img, mask=mask)
-    cv2.imwrite('img/~test.png',mask*img)
+    # cv2.imwrite('img/~test.png',mask*img)
     Z = img.reshape((-1,1))
     Z = np.float32(Z)
     #尝试使用opencv和sklearn的kmeans，感觉opencv更快一点
@@ -16,8 +18,10 @@ def kmeans(img,K=6,mask=None):
     label = np.where(_label == max_label, 1, 0)
     label = np.uint8(label)
     res1 = label.reshape(img.shape)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5, 5))
-    kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(30, 30))
-    res2 = cv2.morphologyEx(res1, cv2.MORPH_OPEN, kernel)
-    res3 = cv2.morphologyEx(res2, cv2.MORPH_CLOSE, kernel2)
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5, 5))
+    # kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(30, 30))
+    # res2 = cv2.morphologyEx(res1, cv2.MORPH_OPEN, kernel)
+    # res3 = cv2.morphologyEx(res2, cv2.MORPH_CLOSE, kernel2)
+    res2 = tool._open(res1)
+    res3 = tool._close(res2)
     return res3 , _label.reshape(img.shape)
