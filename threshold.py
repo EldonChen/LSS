@@ -21,6 +21,9 @@ def _close(img,r=10,shape=cv2.MORPH_ELLIPSE):
     kernel = cv2.getStructuringElement(shape,(r, r))
     return cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
 
+def threshold(img,low,high):
+    return threshold(img,low,high)
+
 def mythreshold(x):
     global mask
     low = cv2.getTrackbarPos("threshold_L", "image")
@@ -31,6 +34,7 @@ def mythreshold(x):
 def main():
     path = './img/simple.png'
     global img
+    global mask
     img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
     cv2.namedWindow("image")
     cv2.createTrackbar("threshold_L", "image", 0, np.max(img), mythreshold) 
@@ -38,6 +42,8 @@ def main():
     cv2.imshow("image",img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    return mask
 
 if __name__ =='__main__':
     main()

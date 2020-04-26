@@ -5,43 +5,25 @@ import math
 from sklearn import mixture
 import matplotlib.mlab
 from sklearn.cluster import KMeans
-def kmeans(img,K=6,mask=None):
-    img = cv2.bitwise_and(img, img, mask=mask)
-    cv2.imwrite('img/~test.png',mask*img)
-    Z = img.reshape((-1,1))
-    Z = np.float32(Z)
-    #尝试使用opencv和sklearn的kmeans，感觉opencv更快一点
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    ret,_label,center=cv2.kmeans(Z,K,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
-    # label = KMeans(n_clusters=K, random_state=0).fit(Z).labels_
-    _label = np.uint8(_label)
-    count = np.bincount(_label.flatten())
-    #目前实现思路是选第二大的分类label（第一大的是背景）
-    a = np.sort(count)[-2]
-    max_label = list(count).index(a)
-    label = np.where(_label == max_label, 1, 0)
-    label = np.uint8(label)
-    res1 = label.reshape(img.shape)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5, 5))
-    kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(30, 30))
-    res2 = cv2.morphologyEx(res1, cv2.MORPH_OPEN, kernel)
-    res3 = cv2.morphologyEx(res2, cv2.MORPH_CLOSE, kernel2)
-    return res3 , _label.reshape(img.shape)
 
-def _open(img,r=5,shape=cv2.MORPH_ELLIPSE):
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
-    return cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+import threshold
 
-def _close(img,r=30,shape=cv2.MORPH_ELLIPSE):
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
-    return cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
 
-def remove_fine_obj(img,area=30):
-    _, contours, hierarchy	= cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-    print(hierarchy)
-    for i in range(hierarchy.shape[0]):
-        if cv2.contourArea(contours[i]) <= area:
-            contours.delete()
+
+# def _open(img,r=5,shape=cv2.MORPH_ELLIPSE):
+#     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
+#     return cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
+
+# def _close(img,r=30,shape=cv2.MORPH_ELLIPSE):
+#     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(r, r))
+#     return cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+
+# def remove_fine_obj(img,area=30):
+#     _, contours, hierarchy	= cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+#     print(hierarchy)
+#     for i in range(hierarchy.shape[0]):
+#         if cv2.contourArea(contours[i]) <= area:
+#             contours.delete()
 
 def func(x, a,u, sig):
     return  a*(np.exp(-(x - u) ** 2 /(2* sig **2))/(math.sqrt(2*math.pi)*sig))
@@ -54,8 +36,9 @@ def residuals(p, x, y):
 path='./img/simple.png'
 img = cv2.imread(path,-1)
 # img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-rmask = np.zeros(img.shape[:2], np.uint8)
-rmask[120:350, 70:350] = 255
+# rmask = np.zeros(img.shape[:2], np.uint8)
+# rmask[120:350, 70:350] = 255
+rmask = threshold.main()
 K = 6
 mask,label = kmeans(img,K=K,mask = rmask)
 
