@@ -28,17 +28,17 @@ import scipy.stats as sta
 #         if cv2.contourArea(contours[i]) <= area:
 #             contours.delete()
 
-def func(x, a,u, sig):
-    return  a*(np.exp(-(x - u) ** 2 /(2* sig **2))/(math.sqrt(2*math.pi)*sig))
+# def func(x, a,u, sig):
+#     return  a*(np.exp(-(x - u) ** 2 /(2* sig **2))/(math.sqrt(2*math.pi)*sig))
 
-def residuals(p, x, y):
-    regularization = 0.1  # 正则化系数lambda
-    ret = y - func(x, p[0],p[1],p[2])
-    return ret
+# def residuals(p, x, y):
+#     regularization = 0.1  # 正则化系数lambda
+#     ret = y - func(x, p[0],p[1],p[2])
+#     return ret
 
-path='./img/046.png'
+path='./img/simple.png'
 # img = cv2.imread(path,-1)
-img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
+img = cv2.imread(path,-1)
 
 # rmask = np.zeros(img.shape[:2], np.uint8)
 # rmask[120:350, 70:350] = 255
@@ -50,7 +50,7 @@ rmask = tool._dilate(rmask,r=30)
 
 # rmask = cv2.imread('img/mask.png',cv2.IMREAD_GRAYSCALE)
 
-K = 6
+K = 4
 mask,label = kmeans.kmeans(img,K=K,mask = rmask)
 
 # tool.remove_fine_obj(mask)
@@ -58,20 +58,20 @@ ret = cv2.bitwise_and(img, img, mask=mask)
 
 Imax = int(img.max())
 Imin = int(img.min())
-IBin = int(Imax - Imin +1)
+IBin = int(Imax + 1 - Imin)
 Ibox = [Imin,Imax]
 
-img_mask = np.ma.masked_equal(cv2.bitwise_and(img, img, mask=mask),0)
+img_mask = np.ma.masked_equal(ret,0)
 
-hist = cv2.calcHist([cv2.bitwise_and(img, img, mask=mask)],[0],mask,[IBin],Ibox)
+hist = cv2.calcHist([ret],[0],mask,[IBin],Ibox)
 hist = np.convolve(hist.flatten(),[1/3,1/3,1/3],'same')
 hist = hist/np.sum(mask)
 
 
-sigma_Prec = np.std(img_mask.flatten()) 
-mu_Prec = np.mean(img_mask.flatten()) 
+# sigma_Prec = np.std(img_mask.flatten()) 
+# mu_Prec = np.mean(img_mask.flatten()) 
 
-y_Prec = sta.norm.pdf(range(IBin), mu_Prec, sigma_Prec)
+# y_Prec = sta.norm.pdf(range(IBin), mu_Prec, sigma_Prec)
 
 
 x = range(IBin)
@@ -87,7 +87,7 @@ y_ = hist.flatten()
 # y = [func(i, popt[0],popt[1],popt[2]) for i in range(256)]
 
 #另一种尝试拟合（效果很一言难尽）
-dataset = np.column_stack((x,y_))
+# dataset = np.column_stack((x,y_))
 
 # clf = mixture.GaussianMixture(1)
 # clf.fit(x,y=y_)
@@ -101,8 +101,12 @@ def gaussian(x,*param):
     return param[0]*np.exp(-np.power(x - param[2], 2.) / (2 * np.power(param[4], 2.)))+\
            param[1]*np.exp(-np.power(x - param[3], 2.) / (2 * np.power(param[5], 2.)))
 
-popt,pcov = curve_fit(gaussian,x,y_,p0=[3,4,3,6,1,1])
+print(x)
+print(hist)
+popt,pcov = curve_fit(gaussian,x,hist,p0=[1,1,1,1,1,1])
 
+print(popt)
+print(pcov)
 # y = [fun(i) for i in range(IBin)]
 y = gaussian(x,*popt)
 # hist = cv2.calcHist(images,channels,mask,histSize,ranges [,hist [,accumulate]])
@@ -125,7 +129,7 @@ plt.subplot(223),plt.imshow(ret,'gray')
 # lahist = cv2.calcHist([label],[0],None,[K],[0,K])
 # plt.subplot(223),plt.plot(lahist,'c')
 # plt.subplot(224),plt.plot(hist,'c'),plt.plot(range(IBin),y,'r')
-plt.subplot(224),plt.plot(hist,'c'),plt.plot(range(IBin),y_Prec,'r')
+plt.subplot(224),plt.plot(hist,'c'),plt.plot(range(IBin),y,'r')
 # plt.subplot(235),plt.plot(range(IBin),y_Prec,'r')
 
 plt.show()
