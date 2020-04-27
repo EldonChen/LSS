@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+import tool
 img = None
 mask = None
 
@@ -28,20 +28,30 @@ def mythreshold(x):
     low = cv2.getTrackbarPos("threshold_L", "image")
     high = cv2.getTrackbarPos("threshold_H", "image")
     mask = threshold(img,low,high)
-    cv2.imshow("image",cv2.add(img, np.zeros(np.shape(img), dtype=np.uint8), mask=mask))
-    
+    cv2.imshow("mask",mask)
+    _mask = tool.get_biggest_obj(mask)
+    cv2.imshow("image",cv2.add(img, np.zeros(np.shape(img), dtype=np.uint8), mask=_mask))
+    cv2.imshow("_mask",_mask)
+
+
 def main(path = './img/simple.png'):   
     global img
     global mask
-    img = cv2.imread(path,cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread(path,-1)
+    mask = np.ones_like(img)*255
     cv2.namedWindow("image")
+    cv2.namedWindow("mask")
+    cv2.namedWindow("_mask")
     cv2.createTrackbar("threshold_L", "image", 0, np.max(img), mythreshold) 
     cv2.createTrackbar("threshold_H", "image", np.max(img), np.max(img), mythreshold) 
+
+    cv2.imshow("mask",mask)
     cv2.imshow("image",img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     # cv2.imwrite('img/mask.png',mask)
+    mask = tool.get_biggest_obj(mask)
     return mask
 
 if __name__ =='__main__':
