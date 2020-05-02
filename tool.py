@@ -18,7 +18,16 @@ def _dilate(img,r=10,shape=cv2.MORPH_ELLIPSE):
 
 def remove_fine_obj(img,area=30):
     _, contours, hierarchy	= cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-    print(hierarchy)
-    for i in range(hierarchy.shape[0]):
+    # print(hierarchy)
+    for i in range(len(contours)):
         if cv2.contourArea(contours[i]) <= area:
-            contours.delete()
+            cv2.drawContours(img,[contours[i]],0,0,-1)
+    return img
+
+def get_biggest_obj(img):
+    _, contours, hierarchy	= cv2.findContours(img,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    max = 0
+    for i in range(len(contours)):
+        if max < cv2.contourArea(contours[i]):
+            max = cv2.contourArea(contours[i])
+    return remove_fine_obj(img,max-1)
